@@ -2,3 +2,5 @@ black==21.12b0
 grpcio==1.43.0
 grpcio-tools==1.43.0
 protobuf==3.19.1
+numpy==1.22.1
+opencv-python==4.5.5.62

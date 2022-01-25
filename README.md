@@ -16,14 +16,14 @@ queue, and then the second thread sends the frames to the client by reading the 
 based on the given video's FPS.
 
 # Future
-1. Integrate this video-streamer on HTTP Protocol. I will be using Envoy Proxy to transcribe HTTP request 
-into some other request that gRPC can understand.
-2. Create a client in React to play video files
+1. Integrate this video-streamer on HTTP Protocol. 
+2. Create a client in React to play video files.
 
 # Steps to run the current program.
 1. Git clone this repo.
-2. Then open two terminal windows(one for client, and one for server).
-3. Then run ```make run-client``` and ```make run-server``` on the respective terminals.
+2. Run ```pip3 -r install requirements.txt```
+3. Then open two terminal windows(one for client, and one for server).
+4. Then run ```make run-client``` and ```make run-server``` on the respective terminals.
 
 # Author
 Rohan Deshpande
