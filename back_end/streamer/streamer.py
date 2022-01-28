@@ -16,40 +16,56 @@ from pathlib import Path
 
 class VideoStreamer:
     def __init__(self, video:Path) -> None:
-        self.video=video
 
-        self.frame_queue = queue.Queue()
+        self.video=video
         self.activate = False
 
-        # Read frame with this thread
-        self.frame_reader_thread = Thread(target=self.read_frame, args=())
-        self.frame_reader_thread.daemon = True
-
-        # Send frames with this thread.
-        self.frame_sender_thread = Thread(target=self.send_frame, args=())
-        self.frame_sender_thread.daemon = True
-        
-    def preprocess_frame(self, frame: np.ndarray):
-        encoded = base64.b64encode(frame)
-        return encoded
-    
     def init_video(self):
+        """
+            Init video threads, and open-cv stuff.
+        """
         if not self.video.exists():
             raise FileNotFoundError(f"Couldn't locate video file {self.video}")
         
-        self.video_path = self.video
-        self.cap = cv.VideoCapture(str(self.video_path))
+        # Read frame with this thread
+        self.frame_reader_thread = Thread(target=self.read_frame, args=(), name="reader")
+        self.frame_reader_thread.daemon = True
+
+        # Send frames with this thread.
+        self.frame_sender_thread = Thread(target=self.send_frame, args=(), name="sender")
+        self.frame_sender_thread.daemon = True
+
+        # Frame queue
+        self.frame_queue = queue.Queue()
+
+        self.cap = cv.VideoCapture(str(self.video))
         
         self.fps = self.cap.get(cv.CAP_PROP_FPS)
         self.dt = 1./self.fps
         self.num_frames = 0
 
+        self.start_video()
+    
+    def start_video(self):
+        """
+            Start threads
+        """
         self.activate = True
         self.frame_reader_thread.start()
+
         if self.cap.isOpened():
             logging.info(f"Frame sender thread started. Video has {self.fps} fps!")
 
         self.frame_sender_thread.start()
+    
+    def release_video_resources(self):
+        """
+            Join threads, and release resources
+        """
+        self.frame_reader_thread.join()
+        self.frame_sender_thread.join()
+        
+        self.cap.release()
 
     def read_frame(self):
         """
@@ -60,7 +76,19 @@ class VideoStreamer:
             if status:
                 logging.info("Putting frames...")
                 self.frame_queue.put(frame)
+            else:
+                if self.frame_queue.empty():
+                    self.activate = False
+                else:
+                    continue
     
+    def preprocess_frame(self, frame: np.ndarray):
+        """
+            Preprocess frames before sending them to client.
+        """
+        encoded = base64.b64encode(frame)
+        return encoded
+
     def send_frame(self):
         """
             Send frames to client at a constant rate.

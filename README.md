@@ -25,5 +25,7 @@ based on the given video's FPS.
 3. Then open two terminal windows(one for client, and one for server).
 4. Then run ```make run-client``` and ```make run-server``` on the respective terminals.
 
+# Picture of Demo
+![demo_plot](./demo.png)
 # Author
 Rohan Deshpande

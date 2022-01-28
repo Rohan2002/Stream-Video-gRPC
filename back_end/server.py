@@ -1,4 +1,5 @@
 import logging
+import multiprocessing
 from pathlib import Path
 import grpc
 from concurrent.futures import ThreadPoolExecutor
@@ -27,12 +28,12 @@ class VideoServer(video_streaming_pb2_grpc.VideoStreamerServicer):
         # Yield response
         for frame, shape in frames:
             yield self.create_frame(frame, shape)
-    
+        self.streamer_api.release_video_resources()
     def sendVideoStream(self, request_iterator, context):
         pass
 
 def serve(address: str) -> None:
-    server = grpc.server(ThreadPoolExecutor())
+    server = grpc.server(ThreadPoolExecutor(10))
     vid_serve = VideoServer()
     video_streaming_pb2_grpc.add_VideoStreamerServicer_to_server(vid_serve, server)
     server.add_insecure_port(address)
