@@ -19,11 +19,16 @@ based on the given video's FPS.
 1. Integrate this video-streamer on HTTP Protocol. 
 2. Create a client in React to play video files.
 
-# Steps to run the current program.
+# Steps to run the current program without Docker.
 1. Git clone this repo.
 2. Run ```pip3 -r install requirements.txt```
 3. Then open two terminal windows(one for client, and one for server).
 4. Then run ```make run-client``` and ```make run-server``` on the respective terminals.
+
+# Steps to run the current program on Docker. ( In progress, still figuring out how to run GUI apps on Docker)
+1. ```docker-compose build```
+2. ```docker-compose up```
+
 
 # Picture of Demo
 ![demo_plot](./demo.png)

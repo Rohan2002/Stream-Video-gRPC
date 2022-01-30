@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.Server
+    image: vid-stream-back:latest
+    command: make run-server
+    ports: 
+      - 50051:50051
+  
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.Client
+    image: vid-stream-client:latest
+    network_mode: host
+    command: make run-client
+    restart: on-failure:10
+    depends_on:
+      - server

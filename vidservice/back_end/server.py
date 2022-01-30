@@ -1,12 +1,11 @@
 import logging
-import multiprocessing
 from pathlib import Path
 import grpc
 from concurrent.futures import ThreadPoolExecutor
 import logging
 import numpy as np
-import back_end.streamer.streamer as streamer
-from protos.protos_definations import (video_streaming_pb2_grpc, video_streaming_pb2)
+import vidservice.back_end.streamer.streamer as streamer
+from vidservice.protos.protos_definations import (video_streaming_pb2_grpc, video_streaming_pb2)
 
 class VideoServer(video_streaming_pb2_grpc.VideoStreamerServicer):
     def create_frame(self, frame: np.ndarray, shape):
@@ -29,6 +28,7 @@ class VideoServer(video_streaming_pb2_grpc.VideoStreamerServicer):
         for frame, shape in frames:
             yield self.create_frame(frame, shape)
         self.streamer_api.release_video_resources()
+    
     def sendVideoStream(self, request_iterator, context):
         pass
 
@@ -43,4 +43,4 @@ def serve(address: str) -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    serve("localhost:50051")
+    serve("0.0.0.0:50051")

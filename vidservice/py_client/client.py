@@ -1,5 +1,5 @@
 import cv2
-from protos.protos_definations import (video_streaming_pb2_grpc, video_streaming_pb2)
+from vidservice.protos.protos_definations import (video_streaming_pb2_grpc, video_streaming_pb2)
 import logging
 import grpc
 import numpy as np
@@ -24,6 +24,7 @@ def view_video(stub:video_streaming_pb2_grpc.VideoStreamerStub):
         # end video stream by escape key
         if client_key_press == 27:
             break
+
         count+=1
     if count == 0:
         logging.info("No frames recieved!")
@@ -32,7 +33,7 @@ def view_video(stub:video_streaming_pb2_grpc.VideoStreamerStub):
 def run():
     logging.info("Starting client...")
     options = [('grpc.max_send_message_length', 512 * 1024 * 1024), ('grpc.max_receive_message_length', 512 * 1024 * 1024)]
-    with grpc.insecure_channel("localhost:50051", options=options) as channel:
+    with grpc.insecure_channel("0.0.0.0:50051", options=options) as channel:
         stub = video_streaming_pb2_grpc.VideoStreamerStub(channel)
         view_video(stub)
 
