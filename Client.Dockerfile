@@ -22,5 +22,3 @@ RUN chown grpc-user:grpc-user /app
 
 USER grpc-user
 ENV PATH "/home/grpc-user/.local/bin:$PATH"
-
-CMD make run-client

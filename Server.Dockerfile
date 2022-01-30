@@ -24,4 +24,3 @@ USER grpc-user
 ENV PATH "/home/grpc-user/.local/bin:$PATH"
 
 EXPOSE 50051
-CMD make run-server
