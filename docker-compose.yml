@@ -4,7 +4,7 @@ services:
   server:
     build:
       context: .
-      dockerfile: Server.Dockerfile
+      dockerfile: ./Docker/Server.Dockerfile
     image: vid-stream-back:latest
     command: make run-server
     ports: 
@@ -13,7 +13,7 @@ services:
   py-client:
     build:
       context: .
-      dockerfile: Client.Dockerfile
+      dockerfile: ./Docker/Client.Dockerfile
     image: vid-stream-client:latest
     network_mode: host
     command: make run-client
@@ -24,10 +24,17 @@ services:
   js-client:
     build:
       context: ./vidview
-      dockerfile: js.Dockerfile
+      dockerfile: ./Docker/JS.Dockerfile
     image: vid-stream-js-client:latest
     command: npm start
     restart: always
     ports:
       - 3000:3000
 
+  envoy:
+    build:
+      context: .
+      dockerfile: ./Docker/Envoy.Dockerfile
+    image: vid-stream-envoy
+    ports:
+      - 8080:8080
