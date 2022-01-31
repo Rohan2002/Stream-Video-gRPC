@@ -1,5 +1,5 @@
 import cv2
-from vidservice.protos.protos_definations import (video_streaming_pb2_grpc, video_streaming_pb2)
+from protos.protos_definations import (video_streaming_pb2_grpc, video_streaming_pb2)
 import logging
 import grpc
 import numpy as np

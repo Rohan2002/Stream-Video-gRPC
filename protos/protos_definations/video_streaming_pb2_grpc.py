@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import vidservice.protos.protos_definations.video_streaming_pb2 as video__streaming__pb2
+import protos.protos_definations.video_streaming_pb2 as video__streaming__pb2
 
 
 class VideoStreamerStub(object):

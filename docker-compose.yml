@@ -10,7 +10,7 @@ services:
     ports: 
       - 50051:50051
   
-  client:
+  py-client:
     build:
       context: .
       dockerfile: Client.Dockerfile
@@ -20,3 +20,14 @@ services:
     restart: on-failure:10
     depends_on:
       - server
+  
+  js-client:
+    build:
+      context: ./vidview
+      dockerfile: js.Dockerfile
+    image: vid-stream-js-client:latest
+    command: npm start
+    restart: always
+    ports:
+      - 3000:3000
+
