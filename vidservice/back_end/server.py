@@ -13,7 +13,7 @@ class VideoServer(video_streaming_pb2_grpc.VideoStreamerServicer):
 
     def getVideoStream(self, request, context):
         # prepare video path based on uuid
-        base_path = Path(__file__).parent.absolute().parents[0]
+        base_path = Path(__file__).parent.absolute().parents[1]
         video_file = f"{request.value.value}.mp4"
         video_uuid_path = base_path / "videos" / video_file
 

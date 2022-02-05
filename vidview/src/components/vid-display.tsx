@@ -3,12 +3,14 @@
 
 */
 import React from 'react';
+import {} from 'protos/protos_definations/'
 
-type VideoFrames = {
-
-}
-const VidDisplay = (props:VideoFrames) =>{
-
+const VidDisplay = () =>{
+    return(
+        <div>
+            Video Placement.
+        </div>
+    )
 }
 
 export default VidDisplay
