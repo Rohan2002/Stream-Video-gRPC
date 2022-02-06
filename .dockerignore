@@ -1,1 +1,2 @@
-vidview/node_modules
+node_modules/
+protos/proto_definations/*

@@ -86,8 +86,8 @@ class VideoStreamer:
         """
             Preprocess frames before sending them to client.
         """
-        encoded = base64.b64encode(frame)
-        return encoded
+        _, buffer = cv.imencode('.png', frame)
+        return base64.b64encode(buffer).decode('utf-8')
 
     def send_frame(self):
         """

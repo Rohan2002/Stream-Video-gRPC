@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 import numpy as np
 import vidservice.back_end.streamer.streamer as streamer
-from protos.protos_definations import (video_streaming_pb2_grpc, video_streaming_pb2)
+from vidservice.proto_definations import (video_streaming_pb2_grpc, video_streaming_pb2)
 
 class VideoServer(video_streaming_pb2_grpc.VideoStreamerServicer):
     def create_frame(self, frame: np.ndarray, shape):
@@ -27,6 +27,7 @@ class VideoServer(video_streaming_pb2_grpc.VideoStreamerServicer):
         # Yield response
         for frame, shape in frames:
             yield self.create_frame(frame, shape)
+            
         self.streamer_api.release_video_resources()
     
     def sendVideoStream(self, request_iterator, context):
