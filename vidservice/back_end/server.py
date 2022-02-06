@@ -26,11 +26,15 @@ class VideoServer(video_streaming_pb2_grpc.VideoStreamerServicer):
         frames = self.streamer_api.send_frame()
         
         # Yield response
-        for frame, shape in frames:
+        for frame, shape, status in frames:
+            if not status:
+                break
             yield self.create_frame(frame, shape)
 
         logging.info("All frames have been read, releasing video resources now....")
         self.streamer_api.release_video_resources()
+        return
+        # TODO: Why does this go in an infinite loop after resources are released (i.e. why are reader, writer threads spawned again in streamer api? Why is streamer api being called again?)
 
 def serve(address: str) -> None:
     server = grpc.server(ThreadPoolExecutor(10))

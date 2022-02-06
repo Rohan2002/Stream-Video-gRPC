@@ -1,7 +1,6 @@
 """
     Core functionality to stream videos.
     Use send_frames as this is a generator that will yield a base64 encoded frame.
-
     @author: Rohan Deshpande
 """
 import logging
@@ -60,7 +59,6 @@ class VideoStreamer:
         logging.info("Starting Sender Thread....")
         self.frame_sender_thread.start()
         
-
     
     def release_video_resources(self):
         """
@@ -88,7 +86,7 @@ class VideoStreamer:
             status, frame = self.cap.read()
             if status:
                 logging.info("Reading frames...")
-                self.frame_queue.put(frame)
+                self.frame_queue.put((frame, status))
     
     def preprocess_frame(self, frame: np.ndarray):
         """
@@ -106,20 +104,26 @@ class VideoStreamer:
         """
         frm = current_timer = None
             # get most recent frame
-        while self.activate and not self.frame_queue.empty():
-            frm = self.frame_queue.get_nowait()
-            if frm is not None:
-                if current_timer is None:
-                    current_timer = time.perf_counter()
+        while self.activate:
+            at_least_one_frame_read = False
+            while not self.frame_queue.empty():
+                frame, status = self.frame_queue.get_nowait()
+                at_least_one_frame_read = status
+                if frame is not None:
+                    if current_timer is None:
+                        current_timer = time.perf_counter()
 
-                encoded_preprocessed_frame = self.preprocess_frame(frm)
-                logging.info(f"Writing frames...{self.num_frames}")
-                yield (encoded_preprocessed_frame, frm.shape)
-                self.num_frames += 1
-            dt = (
-                self.dt
-                if current_timer is None
-                else max(0, current_timer + self.num_frames * self.dt - time.perf_counter())
-            )
-            time.sleep(dt)
-
+                    encoded_preprocessed_frame = self.preprocess_frame(frame)
+                    logging.info(f"Writing frames...{self.num_frames}")
+                    yield (encoded_preprocessed_frame, frame.shape, True)
+                    self.num_frames += 1
+                dt = (
+                    self.dt
+                    if current_timer is None
+                    else max(0, current_timer + self.num_frames * self.dt - time.perf_counter())
+                )
+                time.sleep(dt)
+            
+            if self.frame_queue.empty() and at_least_one_frame_read:
+                logging.info("Sending signal to server about frame over.")
+                yield ("", (0,0,0), False)

@@ -37,7 +37,7 @@ const VidDisplay = () => {
 
     return video_meta;
   };
-  const VideoRequest = CreateVideoRequest("1-sec");
+  const VideoRequest = CreateVideoRequest("e5aa32d3-b480-4ef7-9fb5-0303aab7a2cd");
   const VideoStream = client.getVideoStream(VideoRequest);
 
   const [frame, setFrame] = useState<string>("");
@@ -52,17 +52,12 @@ const VidDisplay = () => {
         try {
           setFrame(image);
         } catch (error) {
-          console.log("ending-stream unexpected!");
-          console.log(error);
+          console.log("Killing stream unexpectedly...have a nice day!");
           VideoStream.cancel();
         }
       });
     } else {
-      VideoStream.on("end", (end:any) => {
-        console.log("end signal sent");
-      });
-
-      console.log("end listener killed");
+      console.log("Killing stream expectedly...have a nice day!");
       VideoStream.cancel();
     }
   }, [play]);
@@ -99,7 +94,6 @@ const VidDisplay = () => {
           </button>
         </div>
         <div>
-
           <img src={frame} />
         </div>
       </div>
