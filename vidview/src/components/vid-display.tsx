@@ -4,19 +4,16 @@
 */
 import React, { useState, useEffect } from "react";
 import { VideoStreamerClient } from "../proto_definations/video-streaming_pb_service";
-import { VideoMetaData, UUID } from "../proto_definations/video-streaming_pb";
-import { grpc } from "@improbable-eng/grpc-web";
-import { BrowserHeaders } from "browser-headers";
+import { VideoMetaData } from "../proto_definations/video-streaming_pb";
 
 const CreateVideoRequest = (uuid_val: string) => {
-  const uuid = new UUID();
-  uuid.setValue(uuid_val);
-
   const video_meta = new VideoMetaData();
-  video_meta.setValue(uuid);
+  video_meta.setValue(uuid_val);
+  video_meta.setHtml(1);
 
   return video_meta;
 };
+
 const client = new VideoStreamerClient("http://0.0.0.0:8080");
 
 const VidDisplay = () => {
@@ -29,7 +26,7 @@ const VidDisplay = () => {
 
   // Frame updater.
   useEffect(() => {
-    VideoStream.on("data", (response) => {
+    VideoStream.on("data", (response: { getB64image: () => string; }) => {
       if (!play) VideoStream.cancel();
       const image: string = "data:image/png;base64," + response.getB64image(); // possible preprocessing of image here.
       setFrame(image);

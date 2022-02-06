@@ -14,11 +14,12 @@ class VideoServer(video_streaming_pb2_grpc.VideoStreamerServicer):
     def getVideoStream(self, request, context):
         # prepare video path based on uuid
         base_path = Path(__file__).parent.absolute().parents[1]
-        video_file = f"{request.value.value}.mp4"
+        video_file = f"{request.value}.mp4"
         video_uuid_path = base_path / "videos" / video_file
 
         # Get request
-        self.streamer_api = streamer.VideoStreamer(video_uuid_path)
+        should_encode_for_html = request.html == 1
+        self.streamer_api = streamer.VideoStreamer(video_uuid_path, html=should_encode_for_html)
         self.streamer_api.init_video()
 
         # Prepare response
@@ -27,11 +28,8 @@ class VideoServer(video_streaming_pb2_grpc.VideoStreamerServicer):
         # Yield response
         for frame, shape in frames:
             yield self.create_frame(frame, shape)
-            
+
         self.streamer_api.release_video_resources()
-    
-    def sendVideoStream(self, request_iterator, context):
-        pass
 
 def serve(address: str) -> None:
     server = grpc.server(ThreadPoolExecutor(10))

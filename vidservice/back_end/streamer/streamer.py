@@ -15,11 +15,11 @@ from threading import Thread
 from pathlib import Path
 
 class VideoStreamer:
-    def __init__(self, video:Path) -> None:
+    def __init__(self, video:Path, html:bool) -> None:
 
         self.video=video
         self.activate = False
-
+        self.html = html
     def init_video(self):
         """
             Init video threads, and open-cv stuff.
@@ -86,8 +86,11 @@ class VideoStreamer:
         """
             Preprocess frames before sending them to client.
         """
-        _, buffer = cv.imencode('.png', frame)
-        return base64.b64encode(buffer).decode('utf-8')
+        if self.html:
+            _, buffer = cv.imencode('.png', frame)
+            return base64.b64encode(buffer).decode('utf-8')
+        else:
+            return base64.b64encode(frame)
 
     def send_frame(self):
         """

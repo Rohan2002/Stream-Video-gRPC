@@ -6,8 +6,7 @@ import numpy as np
 import base64
 
 def create_video_request(uuid:str):
-    uuid = video_streaming_pb2.UUID(value=uuid)
-    return video_streaming_pb2.VideoMetaData(value=uuid)
+    return video_streaming_pb2.VideoMetaData(value=uuid, html=0)
 
 def view_video(stub:video_streaming_pb2_grpc.VideoStreamerStub):
     frames = stub.getVideoStream(request=create_video_request("2b9f4c07-c457-4cc6-8ece-fd4962bae97e"))

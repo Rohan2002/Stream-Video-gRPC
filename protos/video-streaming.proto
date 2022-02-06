@@ -4,17 +4,13 @@ package protos;
 service VideoStreamer {
     // Get video stream (watch)
     rpc getVideoStream(VideoMetaData) returns (stream VideoFrames) {}
-
-    // Send video stream (upload)
-    rpc sendVideoStream(stream VideoFrames) returns (VideoFrames) {}
 }
 
 message VideoMetaData{
-    UUID value = 1;
-}
-message UUID {
     string value = 1;
+    int32 html = 2;
 }
+
 message VideoFrames{
     string b64image = 1;
     int32 width = 2;
