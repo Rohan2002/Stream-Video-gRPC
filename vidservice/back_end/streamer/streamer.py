@@ -51,21 +51,34 @@ class VideoStreamer:
             Start threads
         """
         self.activate = True
+        logging.info("Starting Reader Thread....")
         self.frame_reader_thread.start()
 
         if self.cap.isOpened():
-            logging.info(f"Frame sender thread started. Video has {self.fps} fps!")
+            logging.info(f"Reader thread started. Video has {self.fps} fps!....")
 
+        logging.info("Starting Sender Thread....")
         self.frame_sender_thread.start()
+        
+
     
     def release_video_resources(self):
         """
             Join threads, and release resources
         """
-        self.frame_reader_thread.join()
-        self.frame_sender_thread.join()
+        self.activate = False
         
-        self.cap.release()
+        if (self.frame_reader_thread.is_alive()):
+            logging.info("Joining Reader Thread....")
+            self.frame_reader_thread.join()
+        
+        if (self.frame_sender_thread.is_alive()):
+            logging.info("Joining Sender Thread....")
+            self.frame_sender_thread.join()
+        
+        if self.cap.isOpened():
+            logging.info("Releasing OpenCV Capture Resource....")
+            self.cap.release()
 
     def read_frame(self):
         """
@@ -74,13 +87,8 @@ class VideoStreamer:
         while self.activate:
             status, frame = self.cap.read()
             if status:
-                logging.info("Putting frames...")
+                logging.info("Reading frames...")
                 self.frame_queue.put(frame)
-            else:
-                if self.frame_queue.empty():
-                    self.activate = False
-                else:
-                    continue
     
     def preprocess_frame(self, frame: np.ndarray):
         """
@@ -97,22 +105,21 @@ class VideoStreamer:
             Send frames to client at a constant rate.
         """
         frm = current_timer = None
-        while self.activate:
             # get most recent frame
-            while not self.frame_queue.empty():
-                frm = self.frame_queue.get_nowait()
-                if frm is not None:
-                    if current_timer is None:
-                        current_timer = time.perf_counter()
+        while self.activate and not self.frame_queue.empty():
+            frm = self.frame_queue.get_nowait()
+            if frm is not None:
+                if current_timer is None:
+                    current_timer = time.perf_counter()
 
-                    encoded_preprocessed_frame = self.preprocess_frame(frm)
-                    logging.info(f"Sending frames...{self.num_frames}")
-                    yield (encoded_preprocessed_frame, frm.shape)
-                    self.num_frames += 1
-                dt = (
-                    self.dt
-                    if current_timer is None
-                    else max(0, current_timer + self.num_frames * self.dt - time.perf_counter())
-                )
-                time.sleep(dt)
+                encoded_preprocessed_frame = self.preprocess_frame(frm)
+                logging.info(f"Writing frames...{self.num_frames}")
+                yield (encoded_preprocessed_frame, frm.shape)
+                self.num_frames += 1
+            dt = (
+                self.dt
+                if current_timer is None
+                else max(0, current_timer + self.num_frames * self.dt - time.perf_counter())
+            )
+            time.sleep(dt)
 

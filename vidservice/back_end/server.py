@@ -29,6 +29,7 @@ class VideoServer(video_streaming_pb2_grpc.VideoStreamerServicer):
         for frame, shape in frames:
             yield self.create_frame(frame, shape)
 
+        logging.info("All frames have been read, releasing video resources now....")
         self.streamer_api.release_video_resources()
 
 def serve(address: str) -> None:
