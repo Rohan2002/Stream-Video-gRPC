@@ -4,8 +4,18 @@ package protos;
 service VideoStreamer {
     // Get video stream (watch)
     rpc getVideoStream(VideoMetaData) returns (stream VideoFrames) {}
+
+    // Request start/stop of video stream (control)
+    rpc controlStream(ClientStreamSignal) returns (ServerStreamSignal) {}
+
 }
 
+message ClientStreamSignal{
+    int32 signal = 1; // 0 for False, 1 for True
+}
+message ServerStreamSignal{
+    int32 signal = 1; // 0 for False, 1 for True
+}
 message VideoMetaData{
     string value = 1;
     int32 html = 2;

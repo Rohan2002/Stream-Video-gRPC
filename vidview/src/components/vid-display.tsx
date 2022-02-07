@@ -4,7 +4,10 @@
 */
 import React, { useState, useEffect } from "react";
 import { VideoStreamerClient } from "../proto_definations/video-streaming_pb_service";
-import { VideoMetaData } from "../proto_definations/video-streaming_pb";
+import {
+  ClientStreamSignal,
+  VideoMetaData,
+} from "../proto_definations/video-streaming_pb";
 
 const client = new VideoStreamerClient("http://0.0.0.0:8080");
 
@@ -37,41 +40,67 @@ const VidDisplay = () => {
 
     return video_meta;
   };
-  const VideoRequest = CreateVideoRequest("e5aa32d3-b480-4ef7-9fb5-0303aab7a2cd");
+  const CreateVideoSignal = (start_stream: boolean) => {
+    const client_signal = new ClientStreamSignal();
+    const start_stream_signal = start_stream ? 1 : 0;
+    client_signal.setSignal(start_stream_signal);
+
+    return client_signal;
+  };
+
+  const VideoRequest = CreateVideoRequest(
+    "e5aa32d3-b480-4ef7-9fb5-0303aab7a2cd"
+  );
   const VideoStream = client.getVideoStream(VideoRequest);
 
   const [frame, setFrame] = useState<string>("");
   const [status, setStatus] = useState<any>();
-  const [play, setPlay] = useState<boolean>(false);
+  const [clientPlay, setClientPlay] = useState<boolean>(false);
+  const [serverPlay, setServerPlay] = useState<boolean>(false);
+
+  // Frame signal
+  useEffect(() => {
+    // client request: 1 meaning stream is on else 0 meaning stream is off.
+    const signal = CreateVideoSignal(clientPlay);
+    client.controlStream(signal, (error, response) => {
+      if (error) {
+        console.log(error);
+      } else {
+        const serverResponse = response?.getSignal();
+        if (serverResponse == 1) {
+          // server response: 1 meaning stream is on.
+          setServerPlay(true);
+        } else {
+          // server response: 0 meaning stream is on.
+          setServerPlay(false);
+        }
+      }
+    });
+  }, [clientPlay]);
 
   // Frame updater.
   useEffect(() => {
-    if (play) {
-      VideoStream.on("data", (response: { getB64image: () => string }) => {
-        const image: string = "data:image/png;base64," + response.getB64image(); // possible preprocessing of image here.
-        try {
-          setFrame(image);
-        } catch (error) {
-          console.log("Killing stream unexpectedly...have a nice day!");
-          VideoStream.cancel();
-        }
-      });
-    } else {
-      console.log("Killing stream expectedly...have a nice day!");
-      VideoStream.cancel();
-    }
-  }, [play]);
+    VideoStream.on("data", (response: { getB64image: () => string }) => {
+      const image: string = "data:image/png;base64," + response.getB64image(); // possible preprocessing of image here.
+      try {
+        setFrame(image);
+      } catch (error) {
+        console.log("Killing stream unexpectedly...have a nice day!");
+        VideoStream.cancel();
+      }
+    });
+  }, [clientPlay, serverPlay]);
 
   // // Frame HealthChecker
   useEffect(() => {
-    if (frame && play) {
+    if (frame && clientPlay) {
       VideoStream.on("status", (statuss: any) => {
         if (statuss != null) {
           setStatus(statuss);
         }
       });
     }
-  }, [play, frame]);
+  }, [clientPlay, frame]);
   return (
     <div>
       <div>
@@ -89,9 +118,12 @@ const VidDisplay = () => {
       <div>
         <h1>Video Display</h1>
         <div>
-          <button onClick={() => setPlay(!play)}>
-            {play ? "stop" : "start"}
+          <button onClick={() => setClientPlay(!clientPlay)}>
+            {clientPlay ? "stop stream" : "start stream"}
           </button>
+          <p>
+            {serverPlay ? "Server is playing stream": "Server is not playing stream"}
+          </p>
         </div>
         <div>
           <img src={frame} />

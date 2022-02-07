@@ -8,8 +8,8 @@ WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
 
 # install app dependencies
-COPY . /app/
-RUN npm install
+COPY /vidview/ /app/
+# RUN npm install
 
 # add app
 EXPOSE 3000

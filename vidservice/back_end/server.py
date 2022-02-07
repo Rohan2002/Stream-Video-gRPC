@@ -1,15 +1,32 @@
 import logging
 from pathlib import Path
+import threading
 import grpc
 from concurrent.futures import ThreadPoolExecutor
 import logging
 import numpy as np
 import vidservice.back_end.streamer.streamer as streamer
-from vidservice.proto_definations import (video_streaming_pb2_grpc, video_streaming_pb2)
+from vidservice.proto_definations import video_streaming_pb2_grpc, video_streaming_pb2
+
 
 class VideoServer(video_streaming_pb2_grpc.VideoStreamerServicer):
     def create_frame(self, frame: np.ndarray, shape):
-        return video_streaming_pb2.VideoFrames(b64image=frame, width=shape[0], height = shape[1])
+        return video_streaming_pb2.VideoFrames(
+            b64image=frame, width=shape[0], height=shape[1]
+        )
+
+    def create_server_signal(self, signal: int):
+        return video_streaming_pb2.ServerStreamSignal(signal=signal)
+
+    def controlStream(self, request, context):
+        signal: bool = True if request.signal == 1 else 0
+        self.run = signal
+        if signal:
+            logging.info("Signal to START stream in server is AWAITING.")
+            return self.create_server_signal(1)
+        else:
+            logging.info("Signal to END stream in server is AWAITING.")
+            return self.create_server_signal(0)
 
     def getVideoStream(self, request, context):
         # prepare video path based on uuid
@@ -19,22 +36,27 @@ class VideoServer(video_streaming_pb2_grpc.VideoStreamerServicer):
 
         # Get request
         should_encode_for_html = request.html == 1
-        self.streamer_api = streamer.VideoStreamer(video_uuid_path, html=should_encode_for_html)
-        self.streamer_api.init_video()
+        self.streamer_api = streamer.VideoStreamer(
+            video_uuid_path, html=should_encode_for_html
+        )
+        if hasattr(self, "run"):
+            if not self.run:
+                logging.info("Signal to END stream in server is RECIEVED.")
+                return
+            else:
+                self.streamer_api.init_video()
+                logging.info("Signal to START stream in server is RECIEVED.")
+                frames = self.streamer_api.send_frame()
+                # Yield response
+                for frame, shape, status in frames:
+                    if not status:
+                        break
+                    yield self.create_frame(frame, shape)
 
-        # Prepare response
-        frames = self.streamer_api.send_frame()
-        
-        # Yield response
-        for frame, shape, status in frames:
-            if not status:
-                break
-            yield self.create_frame(frame, shape)
+                logging.info("All frames have been read, releasing video resources now....")
+                self.streamer_api.release_video_resources()
+                self.run = False
 
-        logging.info("All frames have been read, releasing video resources now....")
-        self.streamer_api.release_video_resources()
-        return
-        # TODO: Why does this go in an infinite loop after resources are released (i.e. why are reader, writer threads spawned again in streamer api? Why is streamer api being called again?)
 
 def serve(address: str) -> None:
     server = grpc.server(ThreadPoolExecutor(10))
@@ -44,6 +66,7 @@ def serve(address: str) -> None:
     server.start()
     logging.info("Server serving at %s", address)
     server.wait_for_termination()
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

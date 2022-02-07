@@ -50,14 +50,16 @@ class VideoStreamer:
             Start threads
         """
         self.activate = True
-        logging.info("Starting Reader Thread....")
-        self.frame_reader_thread.start()
+        if not self.frame_reader_thread.is_alive():
+            logging.info("Starting Reader Thread....")
+            self.frame_reader_thread.start()
 
         if self.cap.isOpened():
             logging.info(f"Reader thread started. Video has {self.fps} fps!....")
 
-        logging.info("Starting Sender Thread....")
-        self.frame_sender_thread.start()
+        if not self.frame_sender_thread.is_alive():
+            logging.info("Starting Sender Thread....")
+            self.frame_sender_thread.start()
         
     
     def release_video_resources(self):
@@ -66,15 +68,20 @@ class VideoStreamer:
         """
         self.activate = False
         
-        if (self.frame_reader_thread.is_alive()):
+        if hasattr(self, "frame_queue"):
+            while not self.frame_queue.empty():
+                logging.info("Emptying frames...")
+                self.frame_queue.get_nowait()
+
+        if hasattr(self, "frame_reader_thread") and (self.frame_reader_thread.is_alive()):
             logging.info("Joining Reader Thread....")
             self.frame_reader_thread.join()
         
-        if (self.frame_sender_thread.is_alive()):
+        if hasattr(self, "frame_sender_thread") and (self.frame_sender_thread.is_alive()):
             logging.info("Joining Sender Thread....")
             self.frame_sender_thread.join()
         
-        if self.cap.isOpened():
+        if hasattr(self, "cap") and self.cap.isOpened():
             logging.info("Releasing OpenCV Capture Resource....")
             self.cap.release()
 
