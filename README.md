@@ -34,4 +34,4 @@ based on the given video's FPS.
 # Picture of Demo
 ![demo_plot](./demo.png)
 # Author
-Rohan Deshpande
+Rohan
